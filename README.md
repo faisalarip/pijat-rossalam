@@ -68,6 +68,8 @@ Situs ini sepenuhnya statis (`dist/`). Variabel lingkungan:
 
 - **Cloudflare Pages:** build command `npm run build`, output `dist`, Node 22+.
 - **Vercel:** preset Astro terdeteksi otomatis; output `dist`.
+- **GitHub Pages:** workflow deploy otomatis ke `https://faisalarip.github.io/pijat-rossalam/`
+  setiap ada push ke `main`. Aktifkan Pages dengan sumber **GitHub Actions** di pengaturan repositori.
 
 Setelah online: daftarkan domain di Google Search Console dan kirim `https://<domain>/sitemap-index.xml`.
 
