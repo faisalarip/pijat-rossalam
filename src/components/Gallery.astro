@@ -1,0 +1,221 @@
+---
+import { Image, getImage } from 'astro:assets';
+import { ChevronLeft, ChevronRight, X } from '@lucide/astro';
+import { galleryImages, galleryIsPlaceholder } from '../data/business';
+
+// Larger renditions for the lightbox, generated at build time.
+const items = await Promise.all(
+  galleryImages.map(async (photo) => {
+    const large = await getImage({ src: photo.src, width: 1800, format: 'webp' });
+    return { ...photo, largeSrc: large.src };
+  }),
+);
+
+// Varied tile sizes give the grid an editorial rhythm on large screens:
+// one large tile beside two stacked ones, then the rest share a final row.
+const leadSpans = ['lg:col-span-7 lg:row-span-2', 'lg:col-span-5', 'lg:col-span-5'];
+const rowSpans: Record<number, string> = {
+  1: 'lg:col-span-12',
+  2: 'lg:col-span-6',
+  3: 'lg:col-span-4',
+  4: 'lg:col-span-3',
+};
+const tailCount = Math.max(items.length - leadSpans.length, 0);
+const spanFor = (index: number) => leadSpans[index] ?? rowSpans[tailCount] ?? 'lg:col-span-4';
+
+// On the two-column mobile grid the first tile spans full width; the last one
+// does too when it would otherwise sit alone in its row.
+const isWideOnMobile = (index: number) =>
+  index === 0 || (index === items.length - 1 && (items.length - 1) % 2 === 1);
+---
+
+<section id="galeri" class="section" aria-labelledby="galeri-title">
+  <div class="container-page">
+    <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <div>
+        <h2 id="galeri-title">Suasana tempat kami</h2>
+        <p class="lede mt-5">Ruang yang tenang dan bersih, siap menyambut Anda setiap hari.</p>
+      </div>
+      {
+        galleryIsPlaceholder && (
+          <p class="max-w-xs text-sm text-walnut md:text-right">
+            Foto ilustrasi. Foto asli tempat kami akan segera ditambahkan.
+          </p>
+        )
+      }
+    </div>
+
+    <ul class="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:auto-rows-[15rem] lg:grid-cols-12" role="list">
+      {
+        items.map((item, index) => (
+          <li class:list={['group relative overflow-hidden rounded-[3px] bg-linen', spanFor(index), isWideOnMobile(index) && 'col-span-2']}>
+            <button
+              type="button"
+              class="block h-full w-full cursor-zoom-in"
+              data-lightbox-open={index}
+              aria-label={`Perbesar foto: ${item.caption}`}
+            >
+              <Image
+                src={item.src}
+                alt={item.alt}
+                widths={[400, 640, 960, 1280]}
+                sizes={
+                  index === 0
+                    ? '(min-width: 1024px) 56vw, 100vw'
+                    : `(min-width: 1024px) 32vw, ${isWideOnMobile(index) ? '100vw' : '50vw'}`
+                }
+                class:list={[
+                  'h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]',
+                  isWideOnMobile(index) ? 'aspect-[3/2] lg:aspect-auto' : 'aspect-square lg:aspect-auto',
+                ]}
+                loading="lazy"
+              />
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-espresso/70 to-transparent px-4 pt-10 pb-3 text-left text-sm text-ivory">
+                {item.caption}
+              </span>
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <!-- MARK: Lightbox (native dialog: focus trap and Esc come for free) -->
+  <dialog
+    class="lightbox m-auto h-full max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-espresso/95"
+    aria-label="Galeri foto"
+    data-lightbox
+  >
+    <div class="on-dark flex h-full flex-col text-ivory">
+      <div class="flex items-center justify-between px-4 py-3 sm:px-6">
+        <p class="text-sm text-ivory/80" aria-live="polite" data-lightbox-counter></p>
+        <button
+          type="button"
+          class="inline-flex size-12 items-center justify-center rounded-full hover:bg-ivory/10"
+          data-lightbox-close
+          aria-label="Tutup galeri"
+        >
+          <X size={26} aria-hidden="true" />
+        </button>
+      </div>
+      <figure class="relative flex min-h-0 flex-1 flex-col items-center justify-center px-4 sm:px-20">
+        <img data-lightbox-image alt="" class="max-h-full max-w-full rounded-[2px] object-contain" decoding="async" />
+        <figcaption class="mt-4 pb-6 text-center font-display text-lg" data-lightbox-caption></figcaption>
+        <button
+          type="button"
+          class="lightbox-nav left-2 sm:left-5"
+          data-lightbox-prev
+          aria-label="Foto sebelumnya"
+        >
+          <ChevronLeft size={28} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class="lightbox-nav right-2 sm:right-5"
+          data-lightbox-next
+          aria-label="Foto berikutnya"
+        >
+          <ChevronRight size={28} aria-hidden="true" />
+        </button>
+      </figure>
+    </div>
+  </dialog>
+
+  <script
+    type="application/json"
+    data-lightbox-data
+    set:html={JSON.stringify(items.map(({ largeSrc, alt, caption }) => ({ src: largeSrc, alt, caption })))}
+  />
+</section>
+
+<style>
+  .lightbox[open] {
+    animation: lightbox-in 0.25s ease-out;
+  }
+
+  @keyframes lightbox-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    display: inline-flex;
+    width: 3rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgb(250 246 238 / 0.12);
+    transform: translateY(-50%);
+    transition: background-color 0.2s;
+  }
+
+  .lightbox-nav:hover {
+    background: rgb(250 246 238 / 0.25);
+  }
+</style>
+
+<script>
+  // MARK: - Lightbox
+  interface Slide {
+    src: string;
+    alt: string;
+    caption: string;
+  }
+
+  const dialog = document.querySelector<HTMLDialogElement>('[data-lightbox]');
+  const dataEl = document.querySelector<HTMLScriptElement>('[data-lightbox-data]');
+
+  if (dialog && dataEl) {
+    const slides = JSON.parse(dataEl.textContent ?? '[]') as Slide[];
+    const image = dialog.querySelector<HTMLImageElement>('[data-lightbox-image]');
+    const caption = dialog.querySelector<HTMLElement>('[data-lightbox-caption]');
+    const counter = dialog.querySelector<HTMLElement>('[data-lightbox-counter]');
+    let current = 0;
+    let opener: HTMLElement | null = null;
+
+    const show = (index: number) => {
+      current = (index + slides.length) % slides.length;
+      const slide = slides[current];
+      if (!slide || !image) return;
+      image.src = slide.src;
+      image.alt = slide.alt;
+      if (caption) caption.textContent = slide.caption;
+      if (counter) counter.textContent = `${current + 1} dari ${slides.length}`;
+    };
+
+    document.querySelectorAll<HTMLButtonElement>('[data-lightbox-open]').forEach((button) => {
+      button.addEventListener('click', () => {
+        opener = button;
+        show(Number(button.dataset.lightboxOpen));
+        dialog.showModal();
+      });
+    });
+
+    dialog.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => show(current - 1));
+    dialog.querySelector('[data-lightbox-next]')?.addEventListener('click', () => show(current + 1));
+    dialog.querySelector('[data-lightbox-close]')?.addEventListener('click', () => dialog.close());
+
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') show(current - 1);
+      if (event.key === 'ArrowRight') show(current + 1);
+    });
+
+    // Clicking the dark backdrop (outside the photo and controls) closes it.
+    dialog.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (target === dialog || target.tagName === 'FIGURE') dialog.close();
+    });
+
+    dialog.addEventListener('close', () => {
+      document.documentElement.style.overflow = '';
+      opener?.focus();
+    });
+    dialog.addEventListener('toggle', () => {
+      if (dialog.open) document.documentElement.style.overflow = 'hidden';
+    });
+  }
+</script>

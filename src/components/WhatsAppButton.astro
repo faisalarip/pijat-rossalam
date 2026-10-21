@@ -1,0 +1,74 @@
+---
+import BrandIcon from './icons/BrandIcon.astro';
+import { bookingNumberFor, bookingUrl, whatsappUrl } from '../lib/whatsapp';
+import { track } from '../lib/analytics';
+import type { Branch } from '../data/types';
+
+// MARK: - Reusable booking CTA
+// Every "book" action on the site goes through this component, so the message
+// format, number lookup, analytics and disabled state stay consistent.
+
+interface Props {
+  label?: string;
+  /** Pre-fills the treatment in the WhatsApp message. */
+  serviceName?: string;
+  /** Uses the branch's own number when it has one. */
+  branch?: Branch;
+  /** Replaces the reservation template, e.g. for feedback messages. */
+  message?: string;
+  /** Where on the page the button sits, for analytics. */
+  placement: string;
+  variant?: 'primary' | 'light' | 'outline' | 'outline-light' | 'link';
+  showIcon?: boolean;
+  class?: string;
+}
+
+const {
+  label = 'Pesan via WhatsApp',
+  serviceName,
+  branch,
+  message,
+  placement,
+  variant = 'primary',
+  showIcon = true,
+  class: className,
+} = Astro.props;
+
+const href = message
+  ? whatsappUrl(bookingNumberFor(branch), message)
+  : bookingUrl({ serviceName, branch });
+const variantClass = variant === 'link' ? 'text-link' : `btn btn-${variant}`;
+const accessibleName = serviceName
+  ? `${label}: ${serviceName} (membuka WhatsApp di tab baru)`
+  : `${label} (membuka WhatsApp di tab baru)`;
+---
+
+{
+  href ? (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      class:list={[variantClass, className]}
+      aria-label={accessibleName}
+      {...track('whatsapp_click', {
+        placement,
+        service_name: serviceName,
+        branch: branch?.name,
+      })}
+    >
+      {showIcon && <BrandIcon name="whatsapp" size={20} />}
+      <span>{label}</span>
+    </a>
+  ) : (
+    <span
+      class:list={[variant === 'link' ? 'text-link opacity-60' : 'btn btn-disabled', className]}
+      role="link"
+      aria-disabled="true"
+      title="Nomor WhatsApp belum diatur di src/data/business.ts"
+    >
+      {showIcon && <BrandIcon name="whatsapp" size={20} />}
+      <span>WhatsApp belum tersedia</span>
+    </span>
+  )
+}

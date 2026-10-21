@@ -1,0 +1,97 @@
+---
+import { ExternalLink, Star } from '@lucide/astro';
+import WhatsAppButton from './WhatsAppButton.astro';
+import { business, socialLinks, testimonials } from '../data/business';
+import { isConfiguredUrl } from '../lib/format';
+import { track } from '../lib/analytics';
+
+const reviewsUrl = isConfiguredUrl(socialLinks.googleReviews) ? socialLinks.googleReviews : null;
+const clampRating = (rating: number) => Math.max(0, Math.min(5, Math.round(rating)));
+---
+
+<section class="section bg-linen" aria-labelledby="ulasan-title">
+  <div class="container-page">
+    <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <h2 id="ulasan-title">Cerita pelanggan</h2>
+      {
+        reviewsUrl && (
+          <a
+            href={reviewsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-link"
+            {...track('social_click', { network: 'google_reviews', placement: 'testimonials' })}
+          >
+            Baca ulasan kami di Google
+            <ExternalLink size={16} aria-hidden="true" />
+            <span class="sr-only">(membuka tab baru)</span>
+          </a>
+        )
+      }
+    </div>
+
+    {
+      testimonials.length > 0 ? (
+        <ul class="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3" role="list">
+          {testimonials.map((review) => {
+            const rating = clampRating(review.rating);
+            return (
+              <li class="flex flex-col rounded-[3px] bg-ivory p-8">
+                <figure class="flex flex-1 flex-col">
+                  <p class="flex gap-1 text-brass" aria-label={`Rating ${rating} dari 5`}>
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <Star size={18} aria-hidden="true" fill={i < rating ? 'currentColor' : 'none'} />
+                    ))}
+                  </p>
+                  <blockquote class="mt-5 flex-1 font-display text-xl leading-snug">
+                    <p>“{review.text}”</p>
+                  </blockquote>
+                  <figcaption class="mt-6 text-sm text-walnut">
+                    <span class="font-semibold text-espresso">{review.name}</span>
+                    {review.sourceUrl && isConfiguredUrl(review.sourceUrl) ? (
+                      <>
+                        {', '}
+                        <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer" class="underline underline-offset-4">
+                          {review.sourceLabel ?? 'sumber'}
+                        </a>
+                      </>
+                    ) : (
+                      review.sourceLabel && <>, {review.sourceLabel}</>
+                    )}
+                  </figcaption>
+                </figure>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        // MARK: Empty state. No invented reviews: invite real ones instead.
+        <div class="mt-12 grid items-center gap-8 border-y border-espresso/15 py-12 md:grid-cols-12">
+          <p class="font-display text-[1.75rem] leading-snug md:col-span-7">
+            Ulasan pelanggan akan kami tampilkan di sini. Pernah merasakan layanan {business.shortName}?
+            Kami ingin mendengar cerita Anda.
+          </p>
+          <div class="flex flex-col gap-3 md:col-span-4 md:col-start-9">
+            {reviewsUrl && (
+              <a
+                href={reviewsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-primary"
+                {...track('social_click', { network: 'google_reviews', placement: 'testimonials_empty' })}
+              >
+                Tulis ulasan di Google
+              </a>
+            )}
+            <WhatsAppButton
+              label="Ceritakan lewat WhatsApp"
+              message={`Halo ${business.name}, saya ingin berbagi pengalaman setelah mencoba layanan Anda: `}
+              placement="testimonials_empty"
+              variant={reviewsUrl ? 'outline' : 'primary'}
+            />
+          </div>
+        </div>
+      )
+    }
+  </div>
+</section>

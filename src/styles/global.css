@@ -1,0 +1,168 @@
+@import 'tailwindcss';
+@import '@fontsource/marcellus/latin-400.css';
+@import '@fontsource-variable/figtree/wght.css';
+
+/* MARK: - Design tokens
+   Warm neutrals with a muted sage accent. Espresso and brass echo the
+   brand's black-and-gold print material. */
+@theme {
+  --color-ivory: #faf6ee;
+  --color-linen: #f1e9dc;
+  --color-sand: #dccdb6;
+  --color-walnut: #7a5c45;
+  --color-espresso: #2b211b;
+  --color-sage: #6f7f62;
+  --color-sage-deep: #4a5841;
+  --color-brass: #b8955a;
+
+  --font-display: 'Marcellus', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* MARK: - Base */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-ivory font-sans text-espresso antialiased;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-normal text-balance;
+    letter-spacing: -0.005em;
+  }
+
+  h1 {
+    line-height: 1.04;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 4.2vw, 3.25rem);
+    line-height: 1.1;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    @apply bg-sage-deep text-ivory;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-sage-deep);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .on-dark :focus-visible {
+    outline-color: var(--color-brass);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* MARK: - Components */
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12;
+  }
+
+  .section {
+    @apply py-20 sm:py-28;
+  }
+
+  .lede {
+    @apply max-w-2xl text-lg leading-relaxed text-walnut;
+  }
+
+  /* Buttons share one shape; variants only change colour. */
+  .btn {
+    @apply inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full px-6 text-[0.975rem] font-semibold transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-sage-deep text-ivory hover:bg-espresso;
+  }
+
+  .btn-light {
+    @apply bg-ivory text-espresso hover:bg-linen;
+  }
+
+  .btn-outline {
+    @apply border border-espresso/25 text-espresso hover:border-espresso hover:bg-espresso hover:text-ivory;
+  }
+
+  .btn-outline-light {
+    @apply border border-ivory/50 text-ivory hover:border-ivory hover:bg-ivory hover:text-espresso;
+  }
+
+  .btn-disabled {
+    @apply cursor-not-allowed bg-sand/60 text-walnut;
+  }
+
+  .text-link {
+    @apply inline-flex min-h-11 items-center gap-2 font-semibold text-sage-deep underline decoration-sage/40 decoration-1 underline-offset-[6px] transition-colors hover:text-espresso hover:decoration-espresso;
+  }
+
+  .hairline {
+    @apply border-t border-sand;
+  }
+}
+
+/* MARK: - Page-load moment
+   The only automatic motion on the page: the hero copy settles in once. */
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.settle {
+  animation: settle 0.9s var(--ease-out-soft) both;
+}
+
+.settle-delay-1 {
+  animation-delay: 0.12s;
+}
+
+.settle-delay-2 {
+  animation-delay: 0.24s;
+}
+
+.settle-delay-3 {
+  animation-delay: 0.36s;
+}

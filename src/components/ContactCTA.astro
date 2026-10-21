@@ -1,0 +1,54 @@
+---
+import { Image } from 'astro:assets';
+import { Phone } from '@lucide/astro';
+import WhatsAppButton from './WhatsAppButton.astro';
+import LotusMark from './icons/LotusMark.astro';
+import { business, ctaImage } from '../data/business';
+import { normalizePhoneNumber } from '../lib/whatsapp';
+import { track } from '../lib/analytics';
+
+const phone = normalizePhoneNumber(business.whatsappNumber);
+---
+
+<section id="kontak" class="on-dark bg-sage-deep text-ivory" aria-labelledby="kontak-title">
+  <div class="container-page grid items-stretch gap-0 lg:grid-cols-12">
+    <div class="py-20 sm:py-28 lg:col-span-7 lg:pr-16">
+      <LotusMark size={44} class="text-brass" />
+      <h2 id="kontak-title" class="mt-8 text-[clamp(2.4rem,5.4vw,4.25rem)]">
+        Waktunya Anda beristirahat.
+      </h2>
+      <p class="mt-6 max-w-lg text-lg leading-relaxed text-ivory/85">
+        Kirim pesan, sebutkan layanan dan jam yang Anda inginkan. Kami balas secepatnya dan
+        siapkan terapis untuk Anda.
+      </p>
+      <div class="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <WhatsAppButton label="Pesan via WhatsApp" placement="final_cta" variant="light" />
+        {
+          phone && (
+            <a
+              href={`tel:+${phone}`}
+              class="btn btn-outline-light"
+              {...track('contact_click', { method: 'phone', placement: 'final_cta' })}
+            >
+              <Phone size={18} aria-hidden="true" />
+              <span>
+                <span class="sr-only">Telepon </span>
+                {business.phoneDisplay}
+              </span>
+            </a>
+          )
+        }
+      </div>
+    </div>
+    <div class="relative -mx-5 min-h-72 sm:-mx-8 lg:col-span-5 lg:mx-0 lg:-mr-12">
+      <Image
+        src={ctaImage.src}
+        alt={ctaImage.alt}
+        widths={[480, 800, 1200]}
+        sizes="(min-width: 1024px) 40vw, 100vw"
+        class="absolute inset-0 h-full w-full object-cover"
+        loading="lazy"
+      />
+    </div>
+  </div>
+</section>

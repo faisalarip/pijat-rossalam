@@ -1,0 +1,100 @@
+---
+import { withBase } from '../lib/paths';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { branches, business } from '../data/business';
+import { formatAddress } from '../lib/format';
+
+// Template policy written for this site's actual behaviour. Have it reviewed
+// before relying on it legally.
+const lastUpdated = '21 Oktober 2026';
+const mainBranch = branches[0];
+---
+
+<BaseLayout
+  title={`Kebijakan Privasi | ${business.name}`}
+  description={`Cara ${business.name} memperlakukan data pengunjung situs, termasuk WhatsApp, peta, dan analitik.`}
+>
+  <article class="container-page max-w-3xl pt-36 pb-24 sm:pt-44">
+    <h1 class="text-[clamp(2.5rem,6vw,4rem)]">Kebijakan Privasi</h1>
+    <p class="mt-4 text-walnut">Terakhir diperbarui: {lastUpdated}</p>
+
+    <div class="prose-policy mt-12 space-y-10 text-lg leading-relaxed text-espresso/85">
+      <section>
+        <h2>Ringkasan</h2>
+        <p>
+          Situs ini adalah halaman informasi {business.name}. Kami tidak memiliki formulir,
+          akun pengguna, ataupun sistem pembayaran di situs ini. Reservasi dilakukan melalui
+          WhatsApp.
+        </p>
+      </section>
+
+      <section>
+        <h2>Reservasi lewat WhatsApp</h2>
+        <p>
+          Saat Anda menekan tombol WhatsApp, aplikasi atau situs WhatsApp akan terbuka dengan pesan
+          yang sudah terisi. Pesan baru terkirim setelah Anda menekan kirim. Informasi yang Anda
+          bagikan (nama, nomor telepon, jadwal, dan alamat untuk layanan panggilan) hanya kami
+          gunakan untuk mengatur reservasi Anda. Penggunaan WhatsApp juga tunduk pada kebijakan
+          privasi WhatsApp/Meta.
+        </p>
+      </section>
+
+      <section>
+        <h2>Peta dan video</h2>
+        <p>
+          Peta Google Maps di halaman lokasi baru dimuat setelah Anda menekan tombol
+          "Tampilkan peta". Video Instagram baru dimuat setelah Anda menekan "Putar video".
+          Setelah itu, Google atau Instagram/Meta dapat memproses data sesuai kebijakan privasi
+          masing-masing.
+        </p>
+      </section>
+
+      <section>
+        <h2>Analitik dan cookie</h2>
+        <p>
+          Jika diaktifkan, kami memakai Google Analytics untuk memahami halaman mana yang dibaca dan
+          tombol mana yang ditekan, misalnya tombol WhatsApp atau petunjuk arah. Google Analytics
+          hanya dimuat setelah Anda memilih "Izinkan" pada pemberitahuan cookie. Anda dapat
+          mengubah pilihan kapan saja melalui tautan "Pengaturan cookie" di bagian bawah halaman.
+          Pilihan Anda disimpan di peramban Anda sendiri.
+        </p>
+      </section>
+
+      <section>
+        <h2>Hak Anda</h2>
+        <p>
+          Sesuai Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi, Anda dapat
+          meminta kami menjelaskan, memperbaiki, atau menghapus data pribadi Anda yang kami simpan
+          dari percakapan reservasi. Hubungi kami melalui WhatsApp {business.phoneDisplay}.
+        </p>
+      </section>
+
+      {
+        mainBranch && (
+          <section>
+            <h2>Kontak</h2>
+            <p>
+              {business.name}
+              <br />
+              {formatAddress(mainBranch.address)}
+              <br />
+              WhatsApp: {business.phoneDisplay}
+            </p>
+          </section>
+        )
+      }
+
+      <p>
+        <a href={withBase('/')} class="text-link">Kembali ke beranda</a>
+      </p>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .prose-policy :global(h2) {
+    margin-bottom: 0.75rem;
+    font-size: 1.75rem;
+    color: var(--color-espresso);
+  }
+</style>

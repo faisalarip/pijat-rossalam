@@ -1,0 +1,241 @@
+---
+import { withBase } from '../lib/paths';
+import { Menu, X } from '@lucide/astro';
+import LotusMark from './icons/LotusMark.astro';
+import WhatsAppButton from './WhatsAppButton.astro';
+import { business, navigation } from '../data/business';
+
+interface Props {
+  /** Transparent over a full-bleed hero until the visitor scrolls. */
+  overlay?: boolean;
+}
+
+const { overlay = false } = Astro.props;
+---
+
+<header
+  id="site-header"
+  class="group/header fixed inset-x-0 top-0 z-50 transition-[background-color,color,box-shadow] duration-300"
+  data-overlay={overlay ? 'true' : 'false'}
+  data-scrolled={overlay ? 'false' : 'true'}
+>
+  <div class="container-page flex h-18 items-center justify-between gap-6 sm:h-20">
+    <!-- MARK: Brand -->
+    <a href={withBase('/#beranda')} class="flex items-center gap-3">
+      <LotusMark size={34} class="text-brass" />
+      <span class="flex flex-col leading-none">
+        <span class="font-display text-[1.35rem] tracking-wide">{business.name}</span>
+        <span class="header-muted mt-1 text-xs">sejak {business.establishedYear}</span>
+      </span>
+    </a>
+
+    <!-- MARK: Desktop navigation -->
+    <nav aria-label="Navigasi utama" class="hidden lg:block">
+      <ul class="flex items-center gap-1">
+        {
+          navigation.map((item) => (
+            <li>
+              <a href={withBase(`/#${item.id}`)} data-nav-link={item.id} class="nav-link">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <WhatsAppButton
+        label="Pesan Sekarang"
+        placement="header"
+        class="header-cta hidden sm:inline-flex"
+      />
+      <button
+        type="button"
+        class="menu-toggle inline-flex size-12 items-center justify-center rounded-full lg:hidden"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Buka menu"
+        data-menu-toggle
+      >
+        <Menu size={24} aria-hidden="true" data-icon-open />
+        <X size={24} aria-hidden="true" class="hidden" data-icon-close />
+      </button>
+    </div>
+  </div>
+
+  <!-- MARK: Mobile navigation -->
+  <div
+    id="mobile-menu"
+    class="fixed inset-x-0 top-18 bottom-0 hidden overflow-y-auto bg-ivory text-espresso sm:top-20 lg:hidden"
+    data-mobile-menu
+  >
+    <nav aria-label="Navigasi utama (seluler)" class="container-page flex min-h-full flex-col py-8">
+      <ul class="flex flex-col">
+        {
+          navigation.map((item) => (
+            <li class="hairline">
+              <a
+                href={withBase(`/#${item.id}`)}
+                data-nav-link={item.id}
+                class="flex min-h-16 items-center font-display text-3xl"
+                data-menu-link
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="hairline mt-auto pt-8">
+        <p class="mb-4 text-walnut">Buka setiap hari, 08.00–22.00</p>
+        <WhatsAppButton placement="mobile_menu" class="w-full" />
+      </div>
+    </nav>
+  </div>
+</header>
+
+<style>
+  /* Colours flip once the header leaves the hero. */
+  #site-header[data-scrolled='false'] {
+    color: var(--color-ivory);
+  }
+
+  #site-header[data-scrolled='true'] {
+    background-color: color-mix(in srgb, var(--color-ivory) 94%, transparent);
+    color: var(--color-espresso);
+    box-shadow: 0 1px 0 var(--color-sand);
+    backdrop-filter: blur(10px);
+  }
+
+  #site-header[data-menu-open='true'] {
+    background-color: var(--color-ivory);
+    color: var(--color-espresso);
+    box-shadow: 0 1px 0 var(--color-sand);
+  }
+
+  .header-muted {
+    opacity: 0.75;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    padding-inline: 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0.85rem;
+    bottom: 0.45rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--ease-out-soft);
+  }
+
+  .nav-link:hover::after,
+  .nav-link[aria-current='location']::after {
+    transform: scaleX(1);
+  }
+
+  /* Over the photo the CTA is light; on ivory it uses the brand green. */
+  #site-header[data-scrolled='false']:not([data-menu-open='true']) :global(.header-cta) {
+    background-color: var(--color-ivory);
+    color: var(--color-espresso);
+  }
+
+  .menu-toggle:hover {
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  #site-header[data-scrolled='false'] :focus-visible {
+    outline-color: var(--color-ivory);
+  }
+</style>
+
+<script>
+  // MARK: - Header behaviour
+  const header = document.querySelector<HTMLElement>('#site-header');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const menu = document.querySelector<HTMLElement>('[data-mobile-menu]');
+
+  if (header && toggle && menu) {
+    // Solid background after scrolling past the hero.
+    if (header.dataset.overlay === 'true') {
+      const update = () => {
+        header.dataset.scrolled = window.scrollY > 24 ? 'true' : 'false';
+      };
+      update();
+      window.addEventListener('scroll', update, { passive: true });
+    }
+
+    // Mobile menu.
+    const iconOpen = toggle.querySelector('[data-icon-open]');
+    const iconClose = toggle.querySelector('[data-icon-close]');
+
+    const setOpen = (open: boolean, restoreFocus = true) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      header.dataset.menuOpen = String(open);
+      menu.classList.toggle('hidden', !open);
+      iconOpen?.classList.toggle('hidden', open);
+      iconClose?.classList.toggle('hidden', !open);
+      toggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+      document.documentElement.style.overflow = open ? 'hidden' : '';
+      if (open) {
+        menu.querySelector<HTMLElement>('a, button')?.focus();
+      } else if (restoreFocus) {
+        toggle.focus();
+      }
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    menu.querySelectorAll('[data-menu-link]').forEach((link) => {
+      link.addEventListener('click', () => setOpen(false, false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+      }
+    });
+
+    window.matchMedia('(min-width: 1024px)').addEventListener('change', (event) => {
+      if (event.matches) setOpen(false, false);
+    });
+  }
+
+  // MARK: - Active section
+  const links = document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
+  const sections = [...new Set([...links].map((link) => link.dataset.navLink))]
+    .map((id) => (id ? document.getElementById(id) : null))
+    .filter((section): section is HTMLElement => section !== null);
+
+  if (sections.length > 0 && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          links.forEach((link) => {
+            if (link.dataset.navLink === entry.target.id) {
+              link.setAttribute('aria-current', 'location');
+            } else {
+              link.removeAttribute('aria-current');
+            }
+          });
+        }
+      },
+      { rootMargin: '-45% 0px -50% 0px' },
+    );
+    sections.forEach((section) => observer.observe(section));
+  }
+</script>

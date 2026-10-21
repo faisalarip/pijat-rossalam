@@ -1,0 +1,67 @@
+---
+import WhatsAppButton from './WhatsAppButton.astro';
+import { branches } from '../data/business';
+import { formatHours } from '../lib/format';
+
+const hours = branches[0]?.hours[0];
+---
+
+<!-- MARK: Sticky booking bar (phones only, after the hero) -->
+<div
+  class="mobile-bar fixed inset-x-0 bottom-0 z-40 border-t border-sand bg-ivory/95 backdrop-blur-md md:hidden"
+  data-mobile-bar
+  data-visible="false"
+>
+  <div class="container-page flex items-center justify-between gap-4 py-3">
+    {hours && <p class="text-sm leading-tight text-walnut">Buka setiap hari<br />{formatHours(hours)}</p>}
+    <WhatsAppButton label="Pesan Sekarang" placement="mobile_bar" class="flex-1 sm:flex-none" />
+  </div>
+</div>
+
+<style>
+  .mobile-bar {
+    padding-bottom: env(safe-area-inset-bottom);
+    transition: transform 0.35s var(--ease-out-soft);
+  }
+
+  .mobile-bar[data-visible='false'] {
+    transform: translateY(110%);
+    visibility: hidden;
+  }
+
+  .mobile-bar[data-visible='true'] {
+    visibility: visible;
+  }
+</style>
+
+<script>
+  // Show once the hero has scrolled away; hide again over the final CTA and
+  // footer, which already carry their own booking buttons.
+  const bar = document.querySelector<HTMLElement>('[data-mobile-bar]');
+  const hero = document.getElementById('beranda');
+  const contact = document.getElementById('kontak');
+
+  if (bar && 'IntersectionObserver' in window) {
+    let pastHero = hero === null;
+    let nearEnd = false;
+    const render = () => {
+      bar.dataset.visible = String(pastHero && !nearEnd);
+    };
+
+    if (hero) {
+      new IntersectionObserver(([entry]) => {
+        pastHero = entry ? !entry.isIntersecting : pastHero;
+        render();
+      }).observe(hero);
+    }
+
+    if (contact) {
+      new IntersectionObserver(([entry]) => {
+        // Once the CTA section is reached, keep the bar hidden below it too.
+        nearEnd = entry ? entry.isIntersecting || entry.boundingClientRect.top < 0 : nearEnd;
+        render();
+      }).observe(contact);
+    }
+    render();
+  }
+</script>

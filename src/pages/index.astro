@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Services from '../components/Services.astro';
+import VideoFeature from '../components/VideoFeature.astro';
+import WhyChooseUs from '../components/WhyChooseUs.astro';
+import Gallery from '../components/Gallery.astro';
+import Testimonials from '../components/Testimonials.astro';
+import Locations from '../components/Locations.astro';
+import FAQ from '../components/FAQ.astro';
+import ContactCTA from '../components/ContactCTA.astro';
+import MobileBookingBar from '../components/MobileBookingBar.astro';
+---
+
+<BaseLayout overlayHeader structuredData>
+  <Hero />
+  <About />
+  <Services />
+  <VideoFeature />
+  <WhyChooseUs />
+  <Gallery />
+  <Testimonials />
+  <Locations />
+  <FAQ />
+  <ContactCTA />
+  <MobileBookingBar slot="after-footer" />
+</BaseLayout>

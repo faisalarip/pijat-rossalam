@@ -1,0 +1,175 @@
+---
+import { withBase } from '../lib/paths';
+import { Mail, Phone, Star } from '@lucide/astro';
+import LotusMark from './icons/LotusMark.astro';
+import BrandIcon, { type BrandName } from './icons/BrandIcon.astro';
+import { branches, business, navigation, socialLinks } from '../data/business';
+import { addressLines, formatHours, isConfiguredUrl } from '../lib/format';
+import { normalizePhoneNumber, whatsappUrl } from '../lib/whatsapp';
+import { gaMeasurementId, track } from '../lib/analytics';
+
+const phone = normalizePhoneNumber(business.whatsappNumber);
+const chatUrl = whatsappUrl(phone);
+const mainBranch = branches[0];
+const year = new Date().getFullYear();
+
+// Only configured networks are shown; empty values in business.ts are skipped.
+const networks: { key: string; label: string; url: string; icon: BrandName | 'google' }[] = [
+  { key: 'whatsapp', label: 'WhatsApp', url: chatUrl ?? '', icon: 'whatsapp' as const },
+  { key: 'instagram', label: 'Instagram', url: socialLinks.instagram, icon: 'instagram' as const },
+  { key: 'tiktok', label: 'TikTok', url: socialLinks.tiktok, icon: 'tiktok' as const },
+  { key: 'facebook', label: 'Facebook', url: socialLinks.facebook, icon: 'facebook' as const },
+  { key: 'google_business', label: 'Google', url: socialLinks.googleBusiness, icon: 'google' as const },
+].filter((network) => isConfiguredUrl(network.url));
+---
+
+<footer class="on-dark bg-espresso text-ivory/85">
+  <div class="container-page grid gap-12 py-16 sm:py-20 md:grid-cols-2 lg:grid-cols-12">
+    <!-- MARK: Brand -->
+    <div class="lg:col-span-4">
+      <a href={withBase('/#beranda')} class="inline-flex items-center gap-3 text-ivory">
+        <LotusMark size={38} class="text-brass" />
+        <span class="font-display text-2xl">{business.name}</span>
+      </a>
+      <p class="mt-5 max-w-sm leading-relaxed">{business.description}</p>
+      {
+        networks.length > 0 && (
+          <ul class="mt-7 flex gap-2" role="list" aria-label="Media sosial">
+            {networks.map((network) => (
+              <li>
+                <a
+                  href={network.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex size-12 items-center justify-center rounded-full border border-ivory/25 text-ivory transition-colors hover:border-brass hover:text-brass"
+                  aria-label={`${business.name} di ${network.label} (tab baru)`}
+                  {...track(network.key === 'whatsapp' ? 'whatsapp_click' : 'social_click', {
+                    network: network.key,
+                    placement: 'footer',
+                  })}
+                >
+                  {network.icon === 'google' ? (
+                    <Star size={20} aria-hidden="true" />
+                  ) : (
+                    <BrandIcon name={network.icon} size={20} />
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+
+    <!-- MARK: Navigation -->
+    <nav aria-label="Navigasi footer" class="lg:col-span-2 lg:col-start-6">
+      <h2 class="font-sans text-sm font-semibold text-ivory">Jelajahi</h2>
+      <ul class="mt-4 space-y-1">
+        {
+          navigation.map((item) => (
+            <li>
+              <a href={withBase(`/#${item.id}`)} class="inline-flex min-h-10 items-center hover:text-brass">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <!-- MARK: Visit -->
+    {
+      mainBranch && (
+        <div class="lg:col-span-3">
+          <h2 class="font-sans text-sm font-semibold text-ivory">Kunjungi kami</h2>
+          <address class="mt-4 leading-relaxed not-italic">
+            {addressLines(mainBranch.address).map((line) => (
+              <span class="block">{line}</span>
+            ))}
+          </address>
+          <h2 class="mt-7 font-sans text-sm font-semibold text-ivory">Jam buka</h2>
+          {mainBranch.hours.map((hours) => (
+            <p class="mt-2">
+              {hours.label}, {formatHours(hours)} WIB
+            </p>
+          ))}
+        </div>
+      )
+    }
+
+    <!-- MARK: Contact -->
+    <div class="lg:col-span-2">
+      <h2 class="font-sans text-sm font-semibold text-ivory">Kontak</h2>
+      <ul class="mt-4 space-y-1">
+        {
+          chatUrl && (
+            <li>
+              <a
+                href={chatUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex min-h-10 items-center gap-2.5 hover:text-brass"
+                {...track('whatsapp_click', { placement: 'footer_contact' })}
+              >
+                <BrandIcon name="whatsapp" size={18} />
+                WhatsApp
+                <span class="sr-only">(tab baru)</span>
+              </a>
+            </li>
+          )
+        }
+        {
+          phone && (
+            <li>
+              <a
+                href={`tel:+${phone}`}
+                class="inline-flex min-h-10 items-center gap-2.5 hover:text-brass"
+                {...track('contact_click', { method: 'phone', placement: 'footer' })}
+              >
+                <Phone size={18} aria-hidden="true" />
+                {business.phoneDisplay}
+              </a>
+            </li>
+          )
+        }
+        {
+          business.email && (
+            <li>
+              <a
+                href={`mailto:${business.email}`}
+                class="inline-flex min-h-10 items-center gap-2.5 break-all hover:text-brass"
+                {...track('contact_click', { method: 'email', placement: 'footer' })}
+              >
+                <Mail size={18} aria-hidden="true" />
+                {business.email}
+              </a>
+            </li>
+          )
+        }
+      </ul>
+    </div>
+  </div>
+
+  <!-- MARK: Legal -->
+  <div class="border-t border-ivory/15">
+    <div class="container-page flex flex-col gap-3 py-6 text-sm text-ivory/70 sm:flex-row sm:items-center sm:justify-between">
+      <p>&copy; {year} {business.name}. Melayani sejak {business.establishedYear}.</p>
+      <ul class="flex flex-wrap gap-x-6 gap-y-1">
+        <li>
+          <a href={withBase('/kebijakan-privasi/')} class="inline-flex min-h-10 items-center hover:text-brass">
+            Kebijakan Privasi
+          </a>
+        </li>
+        {
+          gaMeasurementId && (
+            <li>
+              <button type="button" class="inline-flex min-h-10 items-center hover:text-brass" data-consent-open>
+                Pengaturan cookie
+              </button>
+            </li>
+          )
+        }
+      </ul>
+    </div>
+  </div>
+</footer>

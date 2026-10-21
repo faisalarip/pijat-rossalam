@@ -1,0 +1,92 @@
+---
+import { Play, ExternalLink } from '@lucide/astro';
+import BrandIcon from './icons/BrandIcon.astro';
+import LotusMark from './icons/LotusMark.astro';
+import WhatsAppButton from './WhatsAppButton.astro';
+import { featuredVideo } from '../data/business';
+import { instagramEmbedUrl } from '../lib/format';
+import { track } from '../lib/analytics';
+
+const embedUrl = featuredVideo ? instagramEmbedUrl(featuredVideo.url) : null;
+---
+
+{
+  featuredVideo && embedUrl && (
+    <section class="section" aria-labelledby="video-title">
+      <div class="container-page grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
+        <!-- MARK: Copy -->
+        <div class="lg:col-span-6 lg:col-start-1">
+          <h2 id="video-title">{featuredVideo.title}</h2>
+          <p class="lede mt-6">{featuredVideo.description}</p>
+          <div class="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <WhatsAppButton
+              label="Pesan pijat panggilan"
+              serviceName="Pijat panggilan"
+              placement="video"
+            />
+            <a
+              href={featuredVideo.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-link"
+              {...track('social_click', { network: 'instagram', placement: 'video' })}
+            >
+              <BrandIcon name="instagram" size={18} />
+              @{featuredVideo.accountHandle}
+              <ExternalLink size={14} aria-hidden="true" />
+              <span class="sr-only">(Instagram, tab baru)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- MARK: Player (click-to-load: Instagram is contacted only on play) -->
+        <div class="lg:col-span-5 lg:col-start-8">
+          <div
+            class="video-frame relative mx-auto w-full max-w-[380px] overflow-hidden rounded-[4px] bg-espresso"
+            data-video
+            data-video-src={embedUrl}
+          >
+            <button
+              type="button"
+              class="on-dark group absolute inset-0 flex flex-col items-center justify-center gap-6 p-8 text-center text-ivory"
+              data-video-play
+              {...track('video_play', { platform: 'instagram', placement: 'video' })}
+            >
+              <LotusMark size={44} class="text-brass" />
+              <span class="flex size-20 items-center justify-center rounded-full bg-ivory text-espresso transition-transform duration-300 group-hover:scale-105">
+                <Play size={30} fill="currentColor" aria-hidden="true" class="translate-x-0.5" />
+              </span>
+              <span class="font-display text-2xl">Putar video</span>
+              <span class="max-w-[16rem] text-sm text-ivory/75">
+                Video dimuat dari Instagram setelah Anda menekan tombol ini.
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* Instagram's embed page adds a header and footer around the 9:16 reel. */
+  .video-frame {
+    height: min(720px, 85svh);
+  }
+</style>
+
+<script>
+  // MARK: - Video facade
+  document.querySelectorAll<HTMLElement>('[data-video]').forEach((container) => {
+    container.querySelector('[data-video-play]')?.addEventListener('click', () => {
+      const iframe = document.createElement('iframe');
+      iframe.src = container.dataset.videoSrc ?? '';
+      iframe.title = 'Video terapis Pijat Rossalam di Instagram';
+      iframe.className = 'absolute inset-0 h-full w-full border-0 bg-white';
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+      iframe.setAttribute('allowfullscreen', '');
+      container.replaceChildren(iframe);
+      iframe.focus();
+    });
+  });
+</script>

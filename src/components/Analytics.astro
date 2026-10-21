@@ -1,0 +1,123 @@
+---
+import { withBase } from '../lib/paths';
+import { gaMeasurementId } from '../lib/analytics';
+
+// MARK: - Consent-first GA4
+// Nothing is requested from Google until the visitor presses "Izinkan".
+// The choice is stored locally and can be changed from the footer.
+---
+
+{
+  gaMeasurementId && (
+    <>
+      <div
+        class="consent fixed inset-x-3 bottom-3 z-[60] hidden max-w-lg rounded-[4px] bg-espresso p-5 text-ivory shadow-[0_12px_40px_rgb(43_33_27/0.35)] sm:inset-x-auto sm:right-5 sm:bottom-5 on-dark"
+        role="region"
+        aria-label="Persetujuan cookie"
+        data-consent
+      >
+        <p class="text-[0.95rem] leading-relaxed text-ivory/90">
+          Kami ingin memakai Google Analytics untuk memahami cara pengunjung menggunakan situs ini.
+          Data baru dikirim jika Anda mengizinkan.{' '}
+          <a href={withBase('/kebijakan-privasi/')} class="underline underline-offset-4">
+            Pelajari lebih lanjut
+          </a>
+        </p>
+        <div class="mt-4 flex gap-3">
+          <button type="button" class="btn btn-light min-h-11 flex-1" data-consent-accept>
+            Izinkan
+          </button>
+          <button type="button" class="btn btn-outline-light min-h-11 flex-1" data-consent-decline>
+            Tolak
+          </button>
+        </div>
+      </div>
+
+      <script is:inline define:vars={{ measurementId: gaMeasurementId }}>
+        (function () {
+          var KEY = 'rossalam-analytics-consent';
+          var banner = document.querySelector('[data-consent]');
+          var loaded = false;
+
+          function readChoice() {
+            try { return localStorage.getItem(KEY); } catch (e) { return null; }
+          }
+          function saveChoice(value) {
+            try { localStorage.setItem(KEY, value); } catch (e) { /* storage blocked */ }
+          }
+
+          function loadAnalytics() {
+            if (loaded) return;
+            loaded = true;
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', measurementId, { anonymize_ip: true });
+            var script = document.createElement('script');
+            script.async = true;
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
+            document.head.appendChild(script);
+          }
+
+          function showBanner(show) {
+            if (banner) banner.classList.toggle('hidden', !show);
+          }
+
+          var choice = readChoice();
+          if (choice === 'granted') loadAnalytics();
+          else if (choice !== 'denied') showBanner(true);
+
+          document.addEventListener('click', function (event) {
+            var target = event.target instanceof Element ? event.target : null;
+            if (!target) return;
+            if (target.closest('[data-consent-accept]')) {
+              saveChoice('granted');
+              showBanner(false);
+              loadAnalytics();
+            } else if (target.closest('[data-consent-decline]')) {
+              saveChoice('denied');
+              showBanner(false);
+              // GA cookies may remain from an earlier "accept"; ask GA to stop.
+              if (window.gtag) window.gtag('consent', 'update', { analytics_storage: 'denied' });
+              window['ga-disable-' + measurementId] = true;
+            } else if (target.closest('[data-consent-open]')) {
+              showBanner(true);
+              var accept = banner && banner.querySelector('[data-consent-accept]');
+              if (accept) accept.focus();
+            }
+          });
+        })();
+      </script>
+    </>
+  )
+}
+
+<script>
+  // MARK: - Click tracking
+  // Links carry data-track="event" plus data-track-* parameters (see lib/analytics.ts).
+  // Events are only sent when GA has been loaded after consent.
+  type Gtag = (command: 'event', name: string, params: Record<string, string>) => void;
+
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const link = target?.closest<HTMLElement>('[data-track]');
+    const gtag = (window as unknown as { gtag?: Gtag }).gtag;
+    if (!link || !gtag) return;
+
+    const name = link.dataset.track;
+    if (!name) return;
+
+    const params: Record<string, string> = {};
+    for (const [key, value] of Object.entries(link.dataset)) {
+      if (key.startsWith('track') && key !== 'track' && value) {
+        // dataset turns data-track-service-name into trackServiceName.
+        const param = key
+          .slice('track'.length)
+          .replace(/^[A-Z]/, (c) => c.toLowerCase())
+          .replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+        params[param] = value;
+      }
+    }
+    gtag('event', name, params);
+  });
+</script>
